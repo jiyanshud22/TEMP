@@ -1,0 +1,186 @@
+### Product Management System
+
+#### 1. Set Up the Environment
+product-management-system/
+│
+├── backend/                 # Node.js backend
+│   ├── models/              # Database models
+│   ├── routes/              # API routes
+│   ├── controllers/         # Request handlers
+│   ├── config.js            # Database configuration
+│   ├── server.js            # Entry point
+│   └── package.json
+│
+└── frontend/                # React frontend
+    ├── pages/               # Next.js pages
+    ├── components/          # Reusable components
+    ├── styles/              # CSS files
+    └── package.json
+```
+
+### 2. Backend Setup
+
+#### 2.1 Initialize the Node.js Project
+```bash
+mkdir backend
+cd backend
+npm init -y
+npm install express pg cors body-parser
+```
+
+#### 2.2 Configure PostgreSQL Database
+Create a PostgreSQL database and a table:
+```sql
+CREATE TABLE products (
+    id SERIAL PRIMARY KEY,
+    name TEXT NOT NULL,
+    description TEXT,
+    price FLOAT NOT NULL,
+    quantity INTEGER NOT NULL
+);
+```
+
+#### 2.3 Create the Server
+Create a file named `server.js`:
+
+```javascript
+// backend/server.js
+const express = require('express');
+const cors = require('cors');
+const bodyParser = require('body-parser');
+const { Pool } = require('pg');
+
+const app = express();
+const port = 5000;
+
+const pool = new Pool({
+    user: 'your_db_user',
+    host: 'localhost',
+    database: 'your_db_name',
+    password: 'your_db_password',
+    port: 5432,
+});
+
+app.use(cors());
+app.use(bodyParser.json());
+
+// API routes
+app.get('/products', async (req, res) => {
+    const result = await pool.query('SELECT * FROM products');
+    res.json(result.rows);
+});
+
+app.post('/products', async (req, res) => {
+    const { name, description, price, quantity } = req.body;
+    const result = await pool.query(
+        'INSERT INTO products (name, description, price, quantity) VALUES ($1, $2, $3, $4) RETURNING *',
+        [name, description, price, quantity]
+    );
+    res.status(201).json(result.rows[0]);
+});
+
+app.put('/products/:id', async (req, res) => {
+    const { id } = req.params;
+    const { name, description, price, quantity } = req.body;
+    const result = await pool.query(
+        'UPDATE products SET name = $1, description = $2, price = $3, quantity = $4 WHERE id = $5 RETURNING *',
+        [name, description, price, quantity, id]
+    );
+    res.json(result.rows[0]);
+});
+
+app.delete('/products/:id', async (req, res) => {
+    const { id } = req.params;
+    await pool.query('DELETE FROM products WHERE id = $1', [id]);
+    res.sendStatus(204);
+});
+
+// Start server
+app.listen(port, () => {
+    console.log(`Server running at http://localhost:${port}`);
+});
+```
+
+### 3. Frontend Setup
+
+#### 3.1 Initialize the Next.js Project
+```bash
+npx create-next-app frontend
+cd frontend
+npm install axios
+```
+
+#### 3.2 Create Components and Pages
+1. **Create a Product Listing Page:**
+Create a file named `index.js` in the `pages` directory:
+
+```javascript
+// frontend/pages/index.js
+import { useEffect, useState } from 'react';
+import axios from 'axios';
+
+const Home = () => {
+    const [products, setProducts] = useState([]);
+    const [name, setName] = useState('');
+    const [description, setDescription] = useState('');
+    const [price, setPrice] = useState('');
+    const [quantity, setQuantity] = useState('');
+
+    useEffect(() => {
+        fetchProducts();
+    }, []);
+
+    const fetchProducts = async () => {
+        const res = await axios.get('http://localhost:5000/products');
+        setProducts(res.data);
+    };
+
+    const addProduct = async (e) => {
+        e.preventDefault();
+        const newProduct = { name, description, price, quantity };
+        await axios.post('http://localhost:5000/products', newProduct);
+        fetchProducts();
+    };
+
+    return (
+        <div>
+            <h1>Product Management</h1>
+            <form onSubmit={addProduct}>
+                <input type="text" placeholder="Name" value={name} onChange={(e) => setName(e.target.value)} />
+                <input type="text" placeholder="Description" value={description} onChange={(e) => setDescription(e.target.value)} />
+                <input type="number" placeholder="Price" value={price} onChange={(e) => setPrice(e.target.value)} />
+                <input type="number" placeholder="Quantity" value={quantity} onChange={(e) => setQuantity(e.target.value)} />
+                <button type="submit">Add Product</button>
+            </form>
+            <ul>
+                {products.map(product => (
+                    <li key={product.id}>
+                        {product.name} - {product.price} - {product.quantity}
+                    </li>
+                ))}
+            </ul>
+        </div>
+    );
+};
+
+export default Home;
+```
+
+### 4. Running the Application
+
+1. **Start the PostgreSQL server** and ensure your database is set up.
+2. **Start the Node.js backend**:
+   ```bash
+   cd backend
+   node server.js
+   ```
+
+3. **Start the Next.js frontend**:
+   ```bash
+   cd frontend
+   npm run dev
+   ```
+
+4. Access the application at `http://localhost:3000`.
+
+
