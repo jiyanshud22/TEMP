@@ -1,1 +1,20 @@
+recovery codes for jiyanshud22
 
+
+
+2ccb0-27897
+c3e04-1b48e
+b3cf9-4b7bb
+89017-94794
+f7216-c1618
+49dfe-8df67
+92741-23e5a
+57448-24bcc
+49083-c1920
+68b65-5d743
+5a6a2-17b77
+d7165-82a5f
+7c1ff-1ca40
+dd76b-4facf
+0a483-b05d6
+f9541-a9edd
